@@ -98,6 +98,7 @@ addToRoomsPath(player, roomsPath)
 # print(reverseDirections("s"))
 # print(reverseDirections("e"))
 # print(reverseDirections("w"))
+# checked = set()
 
 while True:
     # iterate through exits in current room
@@ -116,11 +117,11 @@ while True:
             # set edge in roomsPath
             roomsPath[prevRoomId][direction] = player.currentRoom.id
             roomsPath[player.currentRoom.id][reverseDirections(direction)] = prevRoomId
-
             # track other unexplored directions to return to
             for direction in roomsPath[prevRoomId]:
                 if roomsPath[prevRoomId][direction] == "?":
                     closestUnexplored.push(prevRoomId)
+
             break
             
     # once no unexplored rooms are left in the current room go to the closestUnexplored 
@@ -131,14 +132,27 @@ while True:
             break
         # if so, traverse them
         else:
+            print("Closest Unexplored: \n", closestUnexplored.stack, "\n\n")
+            # for obj in closestUnexplored.stack:
+            #     print(obj)
             closestUnknown = closestUnexplored.pop()
+            # closestUnknown = closestUnexplored.pop()
+            # if closestUnknown not in checked:
+            #     checked.add(closestUnknown)
             path = bfs(player.currentRoom.id, closestUnknown)
 
+            if (closestUnexplored.stack.count(player.currentRoom.id) > 1):
+                while closestUnexplored.stack.count(player.currentRoom.id) > 0:
+                    closestUnexplored.removeItem(player.currentRoom.id)
             for room in path:
                 if room['direction']:
                     player.travel(room['direction'])
                     traversalPath.append(room['direction'])
-
+            # else:
+            #     print(f"\n checked {checked}")
+            #     break
+print("\n\n Rooms Path: \n", roomsPath, "\n\n")
+print("Traversal Path: \n", traversalPath, "\n\n")
 
 # TRAVERSAL TEST
 visited_rooms = set()

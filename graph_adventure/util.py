@@ -21,6 +21,10 @@ class Stack():
             return self.stack.pop()
         else:
             return None
+
+    def removeItem(self, index):
+        return self.stack.pop(index)
+        
     def size(self):
         return len(self.stack)
 
