@@ -1,8 +1,9 @@
 from room import Room
 from player import Player
 from world import World
+from util import Queue, Stack
 
-import random
+# import random 
 
 # Load world
 world = World()
@@ -17,11 +18,126 @@ roomGraph={494: [(1, 8), {'e': 457}], 492: [(1, 20), {'e': 400}], 493: [(2, 5), 
 
 world.loadGraph(roomGraph)
 world.printRooms()
-player = Player("Name", world.startingRoom)
+player = Player("Sean", world.startingRoom)
 
 
 # FILL THIS IN
-traversalPath = ['n', 's']
+traversalPath = []
+
+
+
+def addToRoomsPath(player, roomsPath):
+    """
+    Takes a player and a path object and sets a key of the
+    current room id. Checks current rooms exits and adds to an object 
+    a key/value pair of direction/"?" 
+    """
+    roomsPath[player.currentRoom.id] = {}
+    validExits = player.currentRoom.getExits()
+    for room in validExits:
+        roomsPath[player.currentRoom.id][room] = "?"
+
+def reverseDirections(currentDirection):
+    """
+    Takes a direction and returns the opposite corresponding direction
+    """
+    if currentDirection == "s":
+        return "n" 
+    elif currentDirection == "n":
+        return "s"
+    elif currentDirection == "w":
+        return "e"
+    elif currentDirection == "e":
+        return "w" 
+
+# backtrack to untraversed directions 
+def bfs( currentRoomId, destinationRoomId):
+    """
+    Return a list containing the shortest path from
+    currentRoomId to destinationRoomId in
+    breath-first order.
+    """
+    queue = Queue()
+    currentRoomId = [{"id": currentRoomId, "direction": None}]
+    queue.enqueue(currentRoomId)
+    visited = set()
+    while queue.size() > 0:
+        path = queue.dequeue()
+        connectingRoom = path[-1]['id']
+        # print(connectingRoom)
+        if connectingRoom not in visited:
+            visited.add(connectingRoom)
+            if connectingRoom == destinationRoomId:
+                return path
+            for neighbor in roomsPath[connectingRoom]:
+                if roomsPath[connectingRoom][neighbor] != "?":
+                    new_path = path[:]
+                    new_path.append({'id': roomsPath[connectingRoom][neighbor], 'direction': neighbor})
+                    queue.enqueue(new_path)
+
+# first_room = player.currentRoom
+# print(first_room)
+# print(world.rooms[0])
+roomsPath = {}
+# closestUnexplored = Stack()
+closestUnexplored = Stack()
+
+addToRoomsPath(player, roomsPath)
+# print(roomsPath)
+
+
+
+
+# addToRoomsPath(player, roomsPath)
+# player.travel("n")
+# addToRoomsPath(player, roomsPath)
+# player.travel("n")
+# addToRoomsPath(player, roomsPath)
+# print(roomsPath)
+# print(reverseDirections("n"))
+# print(reverseDirections("s"))
+# print(reverseDirections("e"))
+# print(reverseDirections("w"))
+
+while True:
+    # iterate through exits in current room
+    for direction in roomsPath[player.currentRoom.id]:
+        # Look for unexplored routes 
+        if roomsPath[player.currentRoom.id][direction] == "?":
+            prevRoomId = player.currentRoom.id
+            # move in unexplored direction and add to traversalPath list
+            player.travel(direction)
+            traversalPath.append(direction)
+
+            # Check if moved to room has already been seen
+            if player.currentRoom.id not in roomsPath:
+                # add to graph
+                addToRoomsPath(player, roomsPath)
+            # set edge in roomsPath
+            roomsPath[prevRoomId][direction] = player.currentRoom.id
+            roomsPath[player.currentRoom.id][reverseDirections(direction)] = prevRoomId
+
+            # track other unexplored directions to return to
+            for direction in roomsPath[prevRoomId]:
+                if roomsPath[prevRoomId][direction] == "?":
+                    closestUnexplored.push(prevRoomId)
+            break
+            
+    # once no unexplored rooms are left in the current room go to the closestUnexplored 
+    else:
+        # check that there is still unexplored directions
+        if closestUnexplored.size() == 0:
+            # if not, break
+            break
+        # if so, traverse them
+        else:
+            closestUnknown = closestUnexplored.pop()
+            path = bfs(player.currentRoom.id, closestUnknown)
+
+            for room in path:
+                if room['direction']:
+                    player.travel(room['direction'])
+                    traversalPath.append(room['direction'])
 
 
 # TRAVERSAL TEST
@@ -50,3 +166,43 @@ else:
 #         player.travel(cmds[0], True)
 #     else:
 #         print("I did not understand that command.")
+
+
+
+# def dft_recursive( starting_vertex, visited=None):
+#         """
+#         Print each vertex in depth-first order
+#         beginning from starting_vertex.
+#         This should be done using recursion.
+#         """
+#         if visited is None:
+#             visited = set()
+#         visited.add(starting_vertex)
+#         print(starting_vertex)
+#         for neighbor in vertices[starting_vertex]:
+#             if neighbor not in visited:
+#                 dft_recursive(neighbor, visited)
+
+# def dfs( starting_vertex, destination_vertex):
+#         """
+#         Return a list containing a path from
+#         starting_vertex to destination_vertex in
+#         depth-first order.
+#         """
+#         stack = Stack()
+#         if type(starting_vertex) == int:
+#             starting_vertex = [starting_vertex]
+#         stack.push(starting_vertex)
+#         visited = set()
+#         while stack.size() > 0:
+#             v = stack.pop()
+#             potential_target = v[-1]
+#             if potential_target not in visited:
+#                 if potential_target == destination_vertex:
+#                     return v
+#                 visited.add(potential_target)
+#                 for neighbor in vertices[potential_target]:
+#                     new_path = v[:]
+#                     new_path.append(neighbor)
+#                     stack.push(new_path)
+#         return False
